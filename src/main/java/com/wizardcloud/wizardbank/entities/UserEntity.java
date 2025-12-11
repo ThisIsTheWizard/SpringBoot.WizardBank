@@ -7,8 +7,14 @@ import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
+
+import java.time.Instant;
 import java.util.UUID;
+
 import lombok.*;
+
+import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UpdateTimestamp;
 
 import com.wizardcloud.wizardbank.enums.UserStatus;
 
@@ -32,13 +38,24 @@ public class UserEntity {
     @Column(nullable = false)
     private String last_name;
 
+    @Column(nullable = false)
+    private String password;
+
     @Column(unique = true)
     private String phone_number;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private UserStatus status = UserStatus.ACTIVE;
+    private UserStatus status = UserStatus.UNVERIFIED;
 
     @Column(nullable = false, unique = true)
     private String username;
+
+    @CreationTimestamp
+    @Column(nullable = false, updatable = false)
+    private Instant created_at;
+
+    @UpdateTimestamp
+    @Column(nullable = false)
+    private Instant updated_at;
 }

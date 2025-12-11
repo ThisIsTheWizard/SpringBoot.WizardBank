@@ -1,37 +1,48 @@
 package com.wizardcloud.wizardbank.controllers;
 
-import com.wizardcloud.wizardbank.services.UserService;
-import org.springframework.beans.factory.annotation.Autowired;
+import jakarta.validation.Valid;
+
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
+import com.wizardcloud.wizardbank.data_transfer_objects.UserCreationInput;
+import com.wizardcloud.wizardbank.data_transfer_objects.UserOutput;
+
+import com.wizardcloud.wizardbank.services.UserService;
 
 @RestController
 @RequestMapping("/api/users")
 public class UserController {
-    @Autowired
-    private UserService userService;
+    private final UserService userService;
+
+    public UserController(UserService userService) {
+        this.userService = userService;
+    }
 
     @GetMapping("/{id}")
-    public String getUser(@PathVariable String id) {
+    private String getUser(@PathVariable String id) {
         return userService.getUser(id);
     }
 
     @GetMapping("")
-    public String getUsers(@RequestParam (required = false) String filter) {
+    private String getUsers(@RequestParam(required = false) String filter) {
         return userService.getUsers(filter);
     }
 
     @PostMapping("")
-    public String createUser(@RequestBody Object userPayload) {
-        return userService.createUser(userPayload);
+    private ResponseEntity<UserOutput> createUser(@Valid @RequestBody UserCreationInput body) {
+        UserOutput createdUser = userService.createUser(body);
+        return new ResponseEntity<>(createdUser, HttpStatus.CREATED);
     }
 
     @PutMapping("/{id}")
-    public String updateUser(@PathVariable String id, @RequestBody Object userPayload) {
+    private String updateUser(@PathVariable String id, @RequestBody Object userPayload) {
         return userService.updateUser(id, userPayload);
     }
 
     @DeleteMapping("/{id}")
-    public String deleteUser(@PathVariable String id) {
+    private String deleteUser(@PathVariable String id) {
         return userService.deleteUser(id);
     }
 }

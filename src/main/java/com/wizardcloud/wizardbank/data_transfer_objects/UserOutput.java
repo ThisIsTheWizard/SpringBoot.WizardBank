@@ -4,7 +4,7 @@ import java.util.UUID;
 
 import com.wizardcloud.wizardbank.enums.UserStatus;
 
-public class UserDTO {
+public class UserOutput {
     public UUID id;
     public String email;
     public String first_name;
