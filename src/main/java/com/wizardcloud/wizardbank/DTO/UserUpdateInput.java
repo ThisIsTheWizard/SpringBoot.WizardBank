@@ -1,21 +1,17 @@
-package com.wizardcloud.wizardbank.data_transfer_objects;
+package com.wizardcloud.wizardbank.DTO;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.annotation.JsonSetter;
 
 import jakarta.validation.constraints.*;
 
-public class UserCreationInput {
+public class UserUpdateInput {
     @Email
     public String email;
 
-    @NotBlank(message = "FIRST_NAME_IS_REQUIRED")
-    public String first_name;
+    public String firstName;
 
-    @NotBlank(message = "LAST_NAME_IS_REQUIRED")
-    public String last_name;
+    public String lastName;
 
-    @NotBlank(message = "PASSWORD_IS_REQUIRED")
     @Size(min = 6, message = "PASSWORD_MUST_BE_AT_LEAST_SIX_CHARACTERS_LONG")
     @Pattern(
         regexp = "^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[^A-Za-z0-9]).*$",
@@ -28,9 +24,8 @@ public class UserCreationInput {
         regexp = "^\\+?[0-9\\-\\s]{7,20}$",
         message = "INVALID_PHONE_NUMBER"
     )
-    public String phone_number;
+    public String phoneNumber;
 
-    @NotBlank(message = "USERNAME_IS_REQUIRED")
-    @Size(min = 3, message = "USERNAME_MUST_BE_BETWEEN_THREE_CHARACTERS_LONG")
+    @Size(min = 3, message = "USERNAME_MUST_BE_AT_LEAST_THREE_CHARACTERS_LONG")
     public String username;
 }

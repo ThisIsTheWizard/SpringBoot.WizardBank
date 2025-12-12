@@ -9,6 +9,7 @@ import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 
 import java.time.Instant;
+import java.util.Locale;
 import java.util.UUID;
 
 import lombok.*;
@@ -33,16 +34,16 @@ public class UserEntity {
     private String email;
 
     @Column(nullable = false)
-    private String first_name;
+    private String firstName;
 
     @Column(nullable = false)
-    private String last_name;
+    private String lastName;
 
     @Column(nullable = false)
     private String password;
 
     @Column(unique = true)
-    private String phone_number;
+    private String phoneNumber;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
@@ -58,4 +59,12 @@ public class UserEntity {
     @UpdateTimestamp
     @Column(nullable = false)
     private Instant updated_at;
+
+    public void setEmail(String email) {
+        this.email = email == null ? null : email.toLowerCase(Locale.ROOT);
+    }
+
+    public void setUsername(String username) {
+        this.username = username == null ? null : username.toLowerCase(Locale.ROOT);
+    }
 }

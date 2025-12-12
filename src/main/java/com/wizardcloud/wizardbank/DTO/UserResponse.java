@@ -1,15 +1,15 @@
-package com.wizardcloud.wizardbank.data_transfer_objects;
+package com.wizardcloud.wizardbank.DTO;
 
 import java.util.UUID;
 
 import com.wizardcloud.wizardbank.enums.UserStatus;
 
-public class UserOutput {
+public class UserResponse {
     public UUID id;
     public String email;
-    public String first_name;
-    public String last_name;
-    public String phone_number;
+    public String firstName;
+    public String lastName;
+    public String phoneNumber;
     public UserStatus status;
     public String username;
 }

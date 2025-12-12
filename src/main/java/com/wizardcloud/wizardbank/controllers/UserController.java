@@ -1,13 +1,19 @@
 package com.wizardcloud.wizardbank.controllers;
 
 import jakarta.validation.Valid;
+import java.util.UUID;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import com.wizardcloud.wizardbank.data_transfer_objects.UserCreationInput;
-import com.wizardcloud.wizardbank.data_transfer_objects.UserOutput;
+import com.wizardcloud.wizardbank.DTO.UserCreationInput;
+import com.wizardcloud.wizardbank.DTO.UserUpdateInput;
+import com.wizardcloud.wizardbank.DTO.UserResponse;
 
 import com.wizardcloud.wizardbank.services.UserService;
 
@@ -21,28 +27,43 @@ public class UserController {
     }
 
     @GetMapping("/{id}")
-    private String getUser(@PathVariable String id) {
-        return userService.getUser(id);
+    private ResponseEntity<UserResponse> getUser(@PathVariable UUID id) {
+        UserResponse user = userService.getUser(id);
+
+        return ResponseEntity.ok(user);
     }
 
     @GetMapping("")
-    private String getUsers(@RequestParam(required = false) String filter) {
-        return userService.getUsers(filter);
+    private ResponseEntity<Page<UserResponse>> getUsers(
+            @PageableDefault(
+                    direction = Sort.Direction.ASC,
+                    size = 50,
+                    sort = {"firstName", "lastName"}
+            ) Pageable pageable
+    ) {
+        Page<UserResponse> pageUsers = userService.getUsers(pageable);
+
+        return ResponseEntity.ok(pageUsers);
     }
 
     @PostMapping("")
-    private ResponseEntity<UserOutput> createUser(@Valid @RequestBody UserCreationInput body) {
-        UserOutput createdUser = userService.createUser(body);
+    private ResponseEntity<UserResponse> createUser(@Valid @RequestBody UserCreationInput body) {
+        UserResponse createdUser = userService.createUser(body);
+
         return new ResponseEntity<>(createdUser, HttpStatus.CREATED);
     }
 
     @PutMapping("/{id}")
-    private String updateUser(@PathVariable String id, @RequestBody Object userPayload) {
-        return userService.updateUser(id, userPayload);
+    private ResponseEntity<UserResponse> updateUser(@PathVariable UUID id, @Valid @RequestBody UserUpdateInput userUpdateInput) {
+        UserResponse updatedUser = userService.updateUser(id, userUpdateInput);
+
+        return ResponseEntity.ok(updatedUser);
     }
 
     @DeleteMapping("/{id}")
-    private String deleteUser(@PathVariable String id) {
-        return userService.deleteUser(id);
+    private ResponseEntity<UserResponse> deleteUser(@PathVariable UUID id) {
+        UserResponse deletedUser = userService.deleteUser(id);
+
+        return ResponseEntity.ok(deletedUser);
     }
 }
