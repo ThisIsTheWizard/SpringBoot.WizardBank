@@ -37,9 +37,10 @@ public class UserController {
             direction = Sort.Direction.ASC,
             size = 50,
             sort = {"firstName", "lastName"}
-        ) Pageable pageable
+        ) Pageable pageable,
+        @RequestParam(required = false) String search
     ) {
-        Page<UserResponse> pageUsers = userService.getUsers(pageable);
+        Page<UserResponse> pageUsers = userService.getUsers(pageable, search);
 
         return ResponseEntity.ok(pageUsers);
     }

@@ -5,7 +5,9 @@ import java.util.UUID;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
 
 import com.wizardcloud.wizardbank.DTO.*;
 
@@ -31,8 +33,16 @@ public class UserService {
         return UserMapper.INSTANCE.toUserOutput(user);
     }
 
-    public Page<UserResponse> getUsers(Pageable pageable) {
-        Page<UserEntity> usersPage = userRepository.findAll(pageable);
+    public Page<UserResponse> getUsers(Pageable pageable, String search) {
+        Page<UserEntity> usersPage;
+
+        if (StringUtils.hasText(search)) {
+            Specification<UserEntity> spec = createSearchSpecification(search.toLowerCase(Locale.ROOT));
+
+            usersPage = userRepository.findAll(spec, pageable);
+        } else {
+            usersPage = userRepository.findAll(pageable);
+        }
 
         return usersPage.map(UserMapper.INSTANCE::toUserOutput);
     }
@@ -109,5 +119,19 @@ public class UserService {
         userRepository.delete(user);
 
         return UserMapper.INSTANCE.toUserOutput(user);
+    }
+
+    private Specification<UserEntity> createSearchSpecification(String search) {
+        return (root, query, criteriaBuilder) -> {
+            String likeSearch = "%" + search + "%";
+
+            return criteriaBuilder.or(
+                criteriaBuilder.like(criteriaBuilder.lower(root.get("email")), likeSearch),
+                criteriaBuilder.like(criteriaBuilder.lower(root.get("firstName")), likeSearch),
+                criteriaBuilder.like(criteriaBuilder.lower(root.get("lastName")), likeSearch),
+                criteriaBuilder.like(criteriaBuilder.lower(root.get("phoneNumber")), likeSearch),
+                criteriaBuilder.like(criteriaBuilder.lower(root.get("username")), likeSearch)
+            );
+        };
     }
 }
