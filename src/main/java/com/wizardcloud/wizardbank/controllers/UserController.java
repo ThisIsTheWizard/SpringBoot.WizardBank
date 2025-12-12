@@ -11,9 +11,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import com.wizardcloud.wizardbank.DTO.UserCreationInput;
-import com.wizardcloud.wizardbank.DTO.UserUpdateInput;
-import com.wizardcloud.wizardbank.DTO.UserResponse;
+import com.wizardcloud.wizardbank.DTO.*;
 
 import com.wizardcloud.wizardbank.services.UserService;
 
@@ -35,11 +33,11 @@ public class UserController {
 
     @GetMapping("")
     private ResponseEntity<Page<UserResponse>> getUsers(
-            @PageableDefault(
-                    direction = Sort.Direction.ASC,
-                    size = 50,
-                    sort = {"firstName", "lastName"}
-            ) Pageable pageable
+        @PageableDefault(
+            direction = Sort.Direction.ASC,
+            size = 50,
+            sort = {"firstName", "lastName"}
+        ) Pageable pageable
     ) {
         Page<UserResponse> pageUsers = userService.getUsers(pageable);
 
