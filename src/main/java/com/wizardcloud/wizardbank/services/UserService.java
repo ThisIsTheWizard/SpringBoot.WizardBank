@@ -1,23 +1,23 @@
 package com.wizardcloud.wizardbank.services;
 
-import java.util.Locale;
-import java.util.UUID;
-
+import com.wizardcloud.wizardbank.DTO.UserCreationInput;
+import com.wizardcloud.wizardbank.DTO.UserResponse;
+import com.wizardcloud.wizardbank.DTO.UserUpdateInput;
+import com.wizardcloud.wizardbank.entities.UserEntity;
+import com.wizardcloud.wizardbank.enums.UserStatus;
+import com.wizardcloud.wizardbank.mappers.UserMapper;
+import com.wizardcloud.wizardbank.repositories.UserRepository;
+import com.wizardcloud.wizardbank.utils.HashingUtil;
+import jakarta.persistence.criteria.Predicate;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
-import org.springframework.util.StringUtils;
 
-import com.wizardcloud.wizardbank.DTO.*;
-
-import com.wizardcloud.wizardbank.entities.UserEntity;
-
-import com.wizardcloud.wizardbank.mappers.UserMapper;
-
-import com.wizardcloud.wizardbank.repositories.UserRepository;
-
-import com.wizardcloud.wizardbank.utils.HashingUtil;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Locale;
+import java.util.UUID;
 
 @Service
 public class UserService {
@@ -33,11 +33,11 @@ public class UserService {
         return UserMapper.INSTANCE.toUserOutput(user);
     }
 
-    public Page<UserResponse> getUsers(Pageable pageable, String search) {
+    public Page<UserResponse> getUsers(Pageable pageable, List<UserStatus> statuses, String search) {
         Page<UserEntity> usersPage;
 
-        if (StringUtils.hasText(search)) {
-            Specification<UserEntity> spec = createSearchSpecification(search.toLowerCase(Locale.ROOT));
+        if (statuses != null || search != null) {
+            Specification<UserEntity> spec = createSearchSpecification(statuses, search);
 
             usersPage = userRepository.findAll(spec, pageable);
         } else {
@@ -121,17 +121,29 @@ public class UserService {
         return UserMapper.INSTANCE.toUserOutput(user);
     }
 
-    private Specification<UserEntity> createSearchSpecification(String search) {
+    private Specification<UserEntity> createSearchSpecification(List<UserStatus> statuses, String search) {
         return (root, query, criteriaBuilder) -> {
-            String likeSearch = "%" + search + "%";
 
-            return criteriaBuilder.or(
-                criteriaBuilder.like(criteriaBuilder.lower(root.get("email")), likeSearch),
-                criteriaBuilder.like(criteriaBuilder.lower(root.get("firstName")), likeSearch),
-                criteriaBuilder.like(criteriaBuilder.lower(root.get("lastName")), likeSearch),
-                criteriaBuilder.like(criteriaBuilder.lower(root.get("phoneNumber")), likeSearch),
-                criteriaBuilder.like(criteriaBuilder.lower(root.get("username")), likeSearch)
-            );
+            List<Predicate> predicates = new ArrayList<>();
+
+            if (search != null) {
+                String likeSearch = "%" + search.toLowerCase(Locale.ROOT) + "%";
+                predicates.add(
+                        criteriaBuilder.or(
+                                criteriaBuilder.like(criteriaBuilder.lower(root.get("email")), likeSearch),
+                                criteriaBuilder.like(criteriaBuilder.lower(root.get("firstName")), likeSearch),
+                                criteriaBuilder.like(criteriaBuilder.lower(root.get("lastName")), likeSearch),
+                                criteriaBuilder.like(criteriaBuilder.lower(root.get("phoneNumber")), likeSearch),
+                                criteriaBuilder.like(criteriaBuilder.lower(root.get("username")), likeSearch)
+                        )
+                );
+            }
+            if (statuses != null && !statuses.isEmpty()) {
+                Predicate statusPredicate = root.get("status").in(statuses);
+                predicates.add(statusPredicate);
+            }
+
+            return criteriaBuilder.and(predicates.toArray(new Predicate[0]));
         };
     }
 }
