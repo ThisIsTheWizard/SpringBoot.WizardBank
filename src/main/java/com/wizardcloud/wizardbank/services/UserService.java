@@ -5,6 +5,7 @@ import com.wizardcloud.wizardbank.DTO.UserResponse;
 import com.wizardcloud.wizardbank.DTO.UserUpdateInput;
 import com.wizardcloud.wizardbank.entities.UserEntity;
 import com.wizardcloud.wizardbank.enums.UserStatus;
+import com.wizardcloud.wizardbank.exceptions.ResourceNotFoundException;
 import com.wizardcloud.wizardbank.mappers.UserMapper;
 import com.wizardcloud.wizardbank.repositories.UserRepository;
 import com.wizardcloud.wizardbank.utils.HashingUtil;
@@ -12,14 +13,14 @@ import jakarta.persistence.criteria.Predicate;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
+import org.springframework.data.jpa.repository.query.EscapeCharacter;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Locale;
-import java.util.UUID;
+import java.util.*;
 
 @Service
+@Transactional
 public class UserService {
     private final UserRepository userRepository;
 
@@ -27,12 +28,14 @@ public class UserService {
         this.userRepository = userRepository;
     }
 
+    @Transactional(readOnly = true)
     public UserResponse getUser(UUID id) {
-        UserEntity user = userRepository.findById(id).orElseThrow(() -> new IllegalArgumentException("USER_NOT_FOUND"));
+        UserEntity user = userRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("USER_NOT_FOUND"));
 
         return UserMapper.INSTANCE.toUserOutput(user);
     }
 
+    @Transactional(readOnly = true)
     public Page<UserResponse> getUsers(Pageable pageable, List<UserStatus> statuses, String search) {
         Page<UserEntity> usersPage;
 
@@ -62,19 +65,21 @@ public class UserService {
 
         user.setPassword(HashingUtil.hashPassword(userCreationInput.password));
 
-        user.setUsername(userCreationInput.username);
-
         userRepository.save(user);
 
         return UserMapper.INSTANCE.toUserOutput(user);
     }
 
     public UserResponse updateUser(UUID id, UserUpdateInput userUpdateInput) {
-        UserEntity user = userRepository.findById(id).orElseThrow(() -> new IllegalArgumentException("USER_NOT_FOUND"));
+        UserEntity user = userRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("USER_NOT_FOUND"));
 
         // Email
         if (userUpdateInput.email != null) {
             String email = userUpdateInput.email.toLowerCase(Locale.ROOT);
+
+            if (Objects.equals(user.getEmail(), email)) {
+                throw new IllegalArgumentException("EMAIL_IS_SAME_AS_CURRENT");
+            }
 
             UserEntity existingUserWithEmail = userRepository.findByEmail(email);
             if (existingUserWithEmail != null) {
@@ -99,6 +104,10 @@ public class UserService {
         if (userUpdateInput.username != null) {
             String username = userUpdateInput.username.toLowerCase(Locale.ROOT);
 
+            if (Objects.equals(user.getUsername(), username)) {
+                throw new IllegalArgumentException("USERNAME_IS_SAME_AS_CURRENT");
+            }
+
             UserEntity existingUserWithUsername = userRepository.findByUsername(username);
             if (existingUserWithUsername != null) {
                 throw new IllegalArgumentException("THIS_USERNAME_IS_ALREADY_ASSOCIATED_WITH_AN_EXISTING_USER");
@@ -114,7 +123,7 @@ public class UserService {
     }
 
     public UserResponse deleteUser(UUID id) {
-        UserEntity user = userRepository.findById(id).orElseThrow(() -> new IllegalArgumentException("USER_NOT_FOUND"));
+        UserEntity user = userRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("USER_NOT_FOUND"));
 
         userRepository.delete(user);
 
@@ -123,19 +132,20 @@ public class UserService {
 
     private Specification<UserEntity> createSearchSpecification(List<UserStatus> statuses, String search) {
         return (root, query, criteriaBuilder) -> {
-
             List<Predicate> predicates = new ArrayList<>();
 
             if (search != null) {
-                String likeSearch = "%" + search.toLowerCase(Locale.ROOT) + "%";
+                EscapeCharacter escape = EscapeCharacter.DEFAULT;
+                String likeSearch = "%" + escape.escape(search.toLowerCase(Locale.ROOT)) + "%";
+
                 predicates.add(
-                        criteriaBuilder.or(
-                                criteriaBuilder.like(criteriaBuilder.lower(root.get("email")), likeSearch),
-                                criteriaBuilder.like(criteriaBuilder.lower(root.get("firstName")), likeSearch),
-                                criteriaBuilder.like(criteriaBuilder.lower(root.get("lastName")), likeSearch),
-                                criteriaBuilder.like(criteriaBuilder.lower(root.get("phoneNumber")), likeSearch),
-                                criteriaBuilder.like(criteriaBuilder.lower(root.get("username")), likeSearch)
-                        )
+                    criteriaBuilder.or(
+                        criteriaBuilder.like(criteriaBuilder.lower(root.get("email")), likeSearch, escape.getEscapeCharacter()),
+                        criteriaBuilder.like(criteriaBuilder.lower(root.get("firstName")), likeSearch, escape.getEscapeCharacter()),
+                        criteriaBuilder.like(criteriaBuilder.lower(root.get("lastName")), likeSearch, escape.getEscapeCharacter()),
+                        criteriaBuilder.like(criteriaBuilder.lower(root.get("phoneNumber")), likeSearch, escape.getEscapeCharacter()),
+                        criteriaBuilder.like(criteriaBuilder.lower(root.get("username")), likeSearch, escape.getEscapeCharacter())
+                    )
                 );
             }
             if (statuses != null && !statuses.isEmpty()) {
@@ -143,7 +153,7 @@ public class UserService {
                 predicates.add(statusPredicate);
             }
 
-            return criteriaBuilder.and(predicates.toArray(new Predicate[0]));
+            return criteriaBuilder.and(predicates.toArray(Predicate[]::new));
         };
     }
 }
