@@ -17,7 +17,7 @@ public class JwtProperties {
     @Getter
     @Setter
     public static class AccessToken {
-        private Token token = new Token();
+        private long expirationMs;
     }
 
     @Getter
@@ -29,13 +29,6 @@ public class JwtProperties {
     @Getter
     @Setter
     public static class SecretToken {
-        private String key;
+        private String token;
     }
-
-    @Getter
-    @Setter
-    public static class Token {
-        private long expirationMs;
-    }
-
 }

@@ -1,23 +1,17 @@
 package com.wizardcloud.wizardbank.entities;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.Id;
-import jakarta.persistence.Table;
-
-import java.time.Instant;
-import java.util.Locale;
-import java.util.UUID;
-
-import lombok.*;
-
+import com.wizardcloud.wizardbank.enums.UserStatus;
+import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
-import com.wizardcloud.wizardbank.enums.UserStatus;
+import java.time.Instant;
+import java.util.List;
+import java.util.Locale;
+import java.util.UUID;
 
 @Entity
 @Data
@@ -59,6 +53,12 @@ public class UserEntity {
     @UpdateTimestamp
     @Column(nullable = false)
     private Instant updated_at;
+
+    // TODO: Remove this after implementing roles and user relations
+    public List<String> getRoles() {
+        return List.of("ADMIN", "DEVELOPER", "MODERATOR", "USER");
+    }
+
 
     public void setEmail(String email) {
         this.email = email == null ? null : email.toLowerCase(Locale.ROOT);
