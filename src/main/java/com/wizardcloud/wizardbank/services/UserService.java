@@ -1,8 +1,6 @@
 package com.wizardcloud.wizardbank.services;
 
-import com.wizardcloud.wizardbank.DTO.UserCreationInput;
-import com.wizardcloud.wizardbank.DTO.UserResponse;
-import com.wizardcloud.wizardbank.DTO.UserUpdateInput;
+import com.wizardcloud.wizardbank.DTO.*;
 import com.wizardcloud.wizardbank.entities.UserEntity;
 import com.wizardcloud.wizardbank.enums.UserStatus;
 import com.wizardcloud.wizardbank.exceptions.ResourceNotFoundException;
@@ -22,9 +20,11 @@ import java.util.*;
 @Service
 @Transactional
 public class UserService {
+    private final JwtService jwtService;
     private final UserRepository userRepository;
 
-    public UserService(UserRepository userRepository) {
+    public UserService(JwtService jwtService, UserRepository userRepository) {
+        this.jwtService = jwtService;
         this.userRepository = userRepository;
     }
 
@@ -128,6 +128,32 @@ public class UserService {
         userRepository.delete(user);
 
         return UserMapper.INSTANCE.toUserOutput(user);
+    }
+
+    public TokenResponse login(LoginInput loginInput) {
+        UserEntity user;
+
+        if (loginInput.email != null) {
+            user = userRepository.findByEmail(loginInput.email.toLowerCase(Locale.ROOT));
+        } else {
+            user = userRepository.findByUsername(loginInput.username.toLowerCase(Locale.ROOT));
+        }
+        if (user == null) {
+            throw new IllegalArgumentException("INVALID_CREDENTIALS");
+        }
+        if (!HashingUtil.verifyPassword(loginInput.password, user.getPassword())) {
+            throw new IllegalArgumentException("INVALID_CREDENTIALS");
+        }
+        if (user.getStatus() != UserStatus.ACTIVE) {
+            throw new IllegalArgumentException("USER_IS_NOT_ACTIVE");
+        }
+
+        TokenResponse tokens = new TokenResponse();
+
+        tokens.accessToken = jwtService.generateAccessToken(user);
+        tokens.refreshToken = jwtService.generateRefreshToken(user);
+
+        return tokens;
     }
 
     private Specification<UserEntity> createSearchSpecification(List<UserStatus> statuses, String search) {

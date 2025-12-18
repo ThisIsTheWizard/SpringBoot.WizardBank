@@ -1,11 +1,14 @@
 package com.wizardcloud.wizardbank.DTO;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-
-import jakarta.validation.constraints.*;
+import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Pattern;
+import jakarta.validation.constraints.Size;
 
 public class UserCreationInput {
     @Email
+    @NotBlank(message = "EMAIL_IS_REQUIRED")
     public String email;
 
     @NotBlank(message = "FIRST_NAME_IS_REQUIRED")
