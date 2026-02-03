@@ -1,14 +1,18 @@
 package com.wizardcloud.wizardbank.services;
 
-import com.wizardcloud.wizardbank.config.JwtProperties;
-import com.wizardcloud.wizardbank.entities.UserEntity;
+import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
-import org.springframework.stereotype.Service;
 
 import javax.crypto.SecretKey;
 import java.util.Date;
 import java.util.Map;
+
+import org.springframework.stereotype.Service;
+
+import com.wizardcloud.wizardbank.config.JwtProperties;
+
+import com.wizardcloud.wizardbank.entities.UserEntity;
 
 @Service
 public class JwtService {
@@ -62,5 +66,13 @@ public class JwtService {
             .expiration(new Date(System.currentTimeMillis() + expiration))
             .signWith(secretKey, Jwts.SIG.HS256)
             .compact();
+    }
+
+    public Claims validateToken(String token) {
+        return Jwts.parser()
+            .verifyWith(secretKey)
+            .build()
+            .parseSignedClaims(token.replace("Bearer ", ""))
+            .getPayload();
     }
 }
